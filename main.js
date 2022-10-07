@@ -7,9 +7,28 @@ let submitButton = document.querySelector(".submit-button")
 let resultContainer = document.querySelector(".results")
 let countdownElement = document.querySelector(".countdown");
 let questionindex = 0;
+let randomindex = []
+let random = [];
 let rightAnswers = 0;
 let countdownInterval;
 
+function shuffle(array) {
+    let currentIndex = array.length, randomIndex;
+
+    // While there remain elements to shuffle.
+    while (currentIndex != 0) {
+
+        // Pick a remaining element.
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+
+        // And swap it with the current element.
+        [array[currentIndex], array[randomIndex]] = [
+            array[randomIndex], array[currentIndex]];
+    }
+
+    return array;
+}
 function getQustions() {
     let myRequst = new XMLHttpRequest();
 
@@ -17,27 +36,32 @@ function getQustions() {
         if (this.readyState === 4 && this.status === 200) {
             let qustionObject = JSON.parse(this.responseText)
             let qustionCount = qustionObject.length;
+            for (let i = 0; i < qustionCount; i++) {
+                randomindex.push(i)
 
+            }
+            random = shuffle(randomindex);
             createBullets(qustionCount)
-            addQustionData(qustionObject[questionindex], qustionCount)
+            addQustionData(qustionObject[random[questionindex]], qustionCount)
             submitButton.onclick = () => {
                 // Get Right Answer
-                let theRightAnswer = qustionObject[questionindex].right_answer;
+                let theRightAnswer = qustionObject[random[questionindex]].right_answer;
+                console.log(random)
 
                 // Increase Index
                 questionindex++;
 
                 // Check The Answer
-                checkAnswer(theRightAnswer, questionindex);
+                checkAnswer(theRightAnswer, random[questionindex]);
                 quizArea.innerHTML = ''
                 answerArea.innerHTML = ''
-                addQustionData(qustionObject[questionindex], qustionCount)
+                addQustionData(qustionObject[random[questionindex]], qustionCount)
                 handelBullets()
                 showResult(qustionCount)
                 clearInterval(countdownInterval)
-                countdown(5,qustionCount)
+                countdown(5, qustionCount)
             }
-            countdown(5,qustionCount)
+            countdown(5, qustionCount)
         }
 
     }
@@ -59,7 +83,7 @@ function createBullets(num) {
 }
 
 function addQustionData(obj, count) {
-    if (questionindex < count) {
+    if (random[questionindex] < count) {
         let questionTitle = document.createElement('h2')
 
         let questionText = document.createTextNode(obj.title)
@@ -124,18 +148,21 @@ function checkAnswer(rAnswer, count) {
         rightAnswers++;
     }
 }
-
+let randomnumber = 0;
 function handelBullets() {
     let span = document.querySelectorAll(".bullets .spans span")
+    
     for (let i = 0; i < span.length; i++) {
-        if (i === questionindex) {
-            span[i].className = "on"
+        if (i === random[questionindex]) {
+            ++randomnumber
+            console.log(randomnumber)
+            span[randomnumber].className = "on"
         }
     }
 }
 function showResult(count) {
     let theResults;
-    if (questionindex === count) {
+    if (randomnumber+1 === count) {
         quizArea.remove();
         answerArea.remove();
         submitButton.remove();
@@ -154,23 +181,23 @@ function showResult(count) {
         resultContainer.style.marginTop = "10px";
     }
 }
-    function countdown(duration, count) {
-        if (questionindex < count) {
-            let minutes, seconds;
-            countdownInterval = setInterval(function () {
-                minutes = parseInt(duration / 60);
-                seconds = parseInt(duration % 60);
+function countdown(duration, count) {
+    if (random[questionindex] < count) {
+        let minutes, seconds;
+        countdownInterval = setInterval(function () {
+            minutes = parseInt(duration / 60);
+            seconds = parseInt(duration % 60);
 
-                minutes = minutes < 10 ? `0${minutes}` : minutes;
-                seconds = seconds < 10 ? `0${seconds}` : seconds;
+            minutes = minutes < 10 ? `0${minutes}` : minutes;
+            seconds = seconds < 10 ? `0${seconds}` : seconds;
 
-                countdownElement.innerHTML = `${minutes}:${seconds}`;
-                --duration
+            countdownElement.innerHTML = `${minutes}:${seconds}`;
+            --duration
 
-                if (duration < 0) {
-                    clearInterval(countdownInterval);
-                    submitButton.click();
-                }
-            }, 1000);
-        }
+            if (duration < 0) {
+                clearInterval(countdownInterval);
+                submitButton.click();
+            }
+        }, 1000);
     }
+}
